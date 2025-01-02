@@ -4,6 +4,7 @@
 #include "esp_system.h"
 #include "nvs_flash.h"
 #include "esp_netif.h"
+#include "lwip/netdb.h"
 
 static const char *TAG = "wifi_station";
 static int s_retry_num = 0;
@@ -20,7 +21,7 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base,
             s_retry_num++;
             ESP_LOGI(TAG, "retry to connect to the AP");
         }
-        ESP_LOGI(TAG,"connect to the AP fail");
+        ESP_LOGI(TAG, "connect to the AP fail - SSID: %s, Password: %s", WIFI_SSID, WIFI_PASS);
     } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
         ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
@@ -52,4 +53,21 @@ void wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_LOGI(TAG, "wifi_init_sta finished.");
+}
+
+void test_dns_resolution() {
+    const char *hostname = "b846-173-76-111-43.ngrok-free.app";
+    struct addrinfo hints = {
+        .ai_family = AF_INET,
+        .ai_socktype = SOCK_STREAM,
+    };
+    struct addrinfo *res;
+    int err = getaddrinfo(hostname, NULL, &hints, &res);
+    if (err != 0 || res == NULL) {
+        ESP_LOGE("DNS", "DNS lookup failed err=%d res=%p", err, res);
+        return;
+    }
+    struct in_addr *addr = &((struct sockaddr_in *)res->ai_addr)->sin_addr;
+    ESP_LOGI("DNS", "DNS lookup succeeded. IP=%s", inet_ntoa(*addr));
+    freeaddrinfo(res);
 } 

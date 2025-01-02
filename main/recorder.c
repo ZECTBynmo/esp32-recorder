@@ -4,6 +4,8 @@
 #include "esp_log.h"
 #include "nvs_flash.h"
 #include "wifi_connect.h"
+#include "audio_recorder.h"
+#include "websocket_client.h"
 
 static const char *TAG = "main";
 
@@ -18,6 +20,13 @@ void app_main(void)
 
     ESP_LOGI(TAG, "ESP_WIFI_MODE_STA");
     wifi_init_sta();
+
+    // Initialize WebSocket client
+    ESP_ERROR_CHECK(websocket_client_init());
+
+    // Initialize and start audio recording
+    ESP_ERROR_CHECK(init_audio_recorder());
+    start_audio_recording();
 
     while (1) {
         vTaskDelay(pdMS_TO_TICKS(1000));
