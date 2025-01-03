@@ -65,6 +65,11 @@ static void audio_recording_task(void *pvParameters) {
     while (1) {
         if (xQueueReceive(audio_queue, received_buffer, portMAX_DELAY) == pdTRUE) {
             // Send audio data over WebSocket
+            if (!websocket_client_is_connected()) {
+                ESP_LOGW(TAG, "Websocket not connected, dropping audio data");
+                continue;
+            }
+
             esp_err_t err = websocket_client_send(received_buffer, AUDIO_BUFFER_SIZE * sizeof(int16_t));
             if (err != ESP_OK) {
                 ESP_LOGE(TAG, "Failed to send audio data over WebSocket");
